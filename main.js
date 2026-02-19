@@ -18,11 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
     { x: '0', y: '-39vh', scale: SCALE },
   ];
 
-  // Bottom row: card bottom 10px from viewport bottom (device-independent)
+  // Bottom row
+  const CARD_W_REM = 24.25;
   const CARD_H_REM = 30.375;
-  const BOTTOM_GAP = 10;
-  const ROW_X = ['-37.5vw', '-25vw', '-12.5vw', '0', '12.5vw', '25vw', '37.5vw'];
-  const ROW_SCALE = [0.4, 0.55, 0.4, 0.65, 0.4, 0.55, 0.4];
+  const GAP_REM = 2;
+  const BOTTOM_GAP_REM = -5; // 10px at 16px base
+  const HEADLINE_MOVE_REM = 10; // move up in Part 2
+  const ROW_SCALE = [0.55, 0.65, 0.55, 0.75, 0.55, 0.65, 0.55];
 
   gsap.set(cards, { scale: 1, x: 0, y: 0 });
   if (headlineImg) gsap.set(headlineImg, { y: 0 });
@@ -53,22 +55,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // Part 2: move to bottom row, aligned by bottom edge
   const PART2_START = 0.65;
   if (headlineImg) {
-    tl.to(headlineImg, { y: -130, duration: 0.35, force3D: true }, PART2_START);
+    tl.to(headlineImg, {
+      y: () => -(HEADLINE_MOVE_REM * (parseFloat(getComputedStyle(document.documentElement).fontSize) || 16)),
+      duration: 0.35,
+      force3D: true,
+    }, PART2_START);
   }
   cards.forEach((card, i) => {
     const scale = ROW_SCALE[i] ?? 0.3;
     const y = () => {
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
       const cardH = CARD_H_REM * rem;
-      return window.innerHeight / 2 - BOTTOM_GAP - (cardH * scale) / 2;
+      const bottomGap = BOTTOM_GAP_REM * rem;
+      return window.innerHeight / 2 - bottomGap - (cardH * scale) / 2;
     };
-    tl.to(card, {
-      x: ROW_X[i] || 0,
-      y,
-      scale,
-      duration: 0.35,
-      force3D: true,
-    }, PART2_START);
+    const x = () => {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const w = CARD_W_REM * rem;
+      const gap = GAP_REM * rem;
+      const rowW = ROW_SCALE.reduce((s, sc) => s + w * sc, 0) + 6 * gap;
+      let pos = -rowW / 2;
+      for (let j = 0; j < i; j++) pos += w * ROW_SCALE[j] + gap;
+      return pos + (w * scale) / 2;
+    };
+    tl.to(card, { x, y, scale, duration: 0.35, force3D: true }, PART2_START);
   });
 
   window.addEventListener('resize', () => ScrollTrigger.refresh());

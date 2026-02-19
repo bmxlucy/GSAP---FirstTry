@@ -5,7 +5,7 @@ body {
   background: #0f0f14;
 }
 
-.hero {
+.hero-section {
   position: relative;
   min-height: 100vh;
   display: flex;
@@ -37,9 +37,9 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 398px;
-  height: 464px;
-  margin: -232px 0 0 -199px;
+  width: 24.25rem;
+  height: 30.375rem;
+  margin: -15.1875rem 0 0 -12.125rem; /* half of w/h */
   background: #474747;
   color: #fff;
   display: flex;

@@ -1,9 +1,9 @@
 gsap.registerPlugin(ScrollTrigger);
 
 document.addEventListener('DOMContentLoaded', () => {
-  const hero = document.querySelector('.hero');
+  const hero = document.querySelector('.hero-section');
   const cards = document.querySelectorAll('.hero-card-gsap');
-  const headlineImg = document.querySelector('.hero-content-img');
+  const headlineImg = document.querySelector('.prod-photo_hero-main-wrap');
 
 
   const SCROLL = '+=250%';
@@ -18,11 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
     { x: '0', y: '-39vh', scale: SCALE },
   ];
 
-  // Bottom row: align by bottom edge (not center)
-  const CARD_HALF_H = 232; // 464 / 2
-  const ROW_BOTTOM_VH = 48; // bottom edge at 38vh from center
-  const ROW_X = ['-30vw', '-20vw', '-10vw', '0', '10vw', '20vw', '30vw'];
-  const ROW_SCALE = [0.3, 0.4, 0.3, 0.4, 0.3, 0.4, 0.3];
+  // Bottom row: card bottom 10px from viewport bottom (device-independent)
+  const CARD_H_REM = 30.375;
+  const BOTTOM_GAP = 10;
+  const ROW_X = ['-37.5vw', '-25vw', '-12.5vw', '0', '12.5vw', '25vw', '37.5vw'];
+  const ROW_SCALE = [0.4, 0.55, 0.4, 0.65, 0.4, 0.55, 0.4];
 
   gsap.set(cards, { scale: 1, x: 0, y: 0 });
   if (headlineImg) gsap.set(headlineImg, { y: 0 });
@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
       start: 'top top',
       end: SCROLL,
       pin: true,
-      scrub: 1.5, // Smooth scroll-linked animation (reduces jitter)
+      scrub: 1.5,
+      invalidateOnRefresh: true,
     },
   });
 
@@ -52,11 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // Part 2: move to bottom row, aligned by bottom edge
   const PART2_START = 0.65;
   if (headlineImg) {
-    tl.to(headlineImg, { y: -100, duration: 0.35, force3D: true }, PART2_START);
+    tl.to(headlineImg, { y: -130, duration: 0.35, force3D: true }, PART2_START);
   }
   cards.forEach((card, i) => {
     const scale = ROW_SCALE[i] ?? 0.3;
-    const y = () => (ROW_BOTTOM_VH / 100) * window.innerHeight - CARD_HALF_H * scale;
+    const y = () => {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const cardH = CARD_H_REM * rem;
+      return window.innerHeight / 2 - BOTTOM_GAP - (cardH * scale) / 2;
+    };
     tl.to(card, {
       x: ROW_X[i] || 0,
       y,
@@ -65,4 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
       force3D: true,
     }, PART2_START);
   });
+
+  window.addEventListener('resize', () => ScrollTrigger.refresh());
 });

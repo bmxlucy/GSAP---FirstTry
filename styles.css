@@ -31,6 +31,7 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
 .hero-card-gsap {

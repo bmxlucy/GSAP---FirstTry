@@ -42,11 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const rowW = ROW_SCALE.reduce((s, sc) => s + w * sc, 0) + 6 * gap;
     return { rem, w, gap, rowW };
   };
-  // Scroll distance: first row + gap + width of 4 dup cards (2,3,4,5)
+  // Scroll until card 5 (last of second row) is fully visible - right edge at viewport right
   const ROW_WIDTH = () => {
     const { w, gap, rowW } = getRowValues();
-    const dupW = DUP_INDICES.reduce((s, j) => s + w * ROW_SCALE[j], 0) + 3 * gap;
-    return rowW + gap + dupW;
+    let card5Center = rowW / 2 + gap + (w * ROW_SCALE[DUP_INDICES[3]]) / 2;
+    for (let j = 0; j < 3; j++) card5Center += w * ROW_SCALE[DUP_INDICES[j]] + gap;
+    const card5RightEdge = card5Center + (w * ROW_SCALE[DUP_INDICES[3]]) / 2;
+    return Math.max(0, card5RightEdge - window.innerWidth / 2);
   };
 
   gsap.set(cards, { scale: 1, x: 0, y: 0 });

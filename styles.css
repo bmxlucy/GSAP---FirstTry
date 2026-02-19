@@ -52,7 +52,7 @@ body {
 }
 
 .next-section {
-  min-height: 200vh;
+  min-height: 350vh;
   display: flex;
   flex-direction: column;
   align-items: center;

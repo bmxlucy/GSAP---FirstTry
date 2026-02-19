@@ -2,11 +2,21 @@ gsap.registerPlugin(ScrollTrigger);
 
 document.addEventListener('DOMContentLoaded', () => {
   const hero = document.querySelector('.hero-section');
-  const cards = document.querySelectorAll('.hero-card-gsap');
   const cardsContainer = document.querySelector('.hero-cards');
+  let cards = document.querySelectorAll('.hero-card-gsap');
+
+  // Clone cards 2,3,4,5 for second row (duplicates appear from right)
+  const originalCount = cards.length;
+  const DUP_INDICES = [1, 2, 3, 4]; // cards 2, 3, 4, 5
+  DUP_INDICES.forEach((idx) => {
+    const clone = cards[idx].cloneNode(true);
+    cardsContainer.appendChild(clone);
+  });
+  cards = document.querySelectorAll('.hero-card-gsap');
+
   const headlineImg = document.querySelector('.prod-photo_hero-main-wrap');
 
-  const SCROLL = '+=350%';
+  const SCROLL = '+=300%';
   const SCALE = 0.4;
   const SPREAD = [
     { x: '-20vw', y: '-34vh', scale: SCALE },
@@ -25,9 +35,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const BOTTOM_GAP_REM = -5; // 10px at 16px base
   const HEADLINE_MOVE_REM = 10; // move up in Part 2
   const ROW_SCALE = [0.55, 0.65, 0.55, 0.75, 0.55, 0.65, 0.55];
-  const CAROUSEL_DISTANCE = 3; // cards worth of scroll (right to left)
+  const getRowValues = () => {
+    const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const w = CARD_W_REM * rem;
+    const gap = GAP_REM * rem;
+    const rowW = ROW_SCALE.reduce((s, sc) => s + w * sc, 0) + 6 * gap;
+    return { rem, w, gap, rowW };
+  };
+  // Scroll distance: first row + gap + width of 4 dup cards (2,3,4,5)
+  const ROW_WIDTH = () => {
+    const { w, gap, rowW } = getRowValues();
+    const dupW = DUP_INDICES.reduce((s, j) => s + w * ROW_SCALE[j], 0) + 3 * gap;
+    return rowW + gap + dupW;
+  };
 
   gsap.set(cards, { scale: 1, x: 0, y: 0 });
+  cards.forEach((c, i) => { if (i >= originalCount) gsap.set(c, { opacity: 0 }); });
   if (headlineImg) gsap.set(headlineImg, { y: 0 });
   if (cardsContainer) gsap.set(cardsContainer, { x: 0 });
 
@@ -42,8 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  // Part 1: scale + spread (unique scale per card)
+  // Part 1: scale + spread (only first 7 cards)
   cards.forEach((card, i) => {
+    if (i >= originalCount) return;
     const pos = SPREAD[i] || { x: 0, y: 0, scale: 0.4 };
     tl.to(card, {
       x: pos.x,
@@ -65,7 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }, PART2_START);
   }
   cards.forEach((card, i) => {
-    const scale = ROW_SCALE[i] ?? 0.3;
+    const idx = i < originalCount ? i : DUP_INDICES[i - originalCount];
+    const scale = ROW_SCALE[idx] ?? 0.3;
+    const rowOffset = i >= originalCount ? 1 : 0;
     const y = () => {
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
       const cardH = CARD_H_REM * rem;
@@ -73,14 +99,20 @@ document.addEventListener('DOMContentLoaded', () => {
       return window.innerHeight / 2 - bottomGap - (cardH * scale) / 2;
     };
     const x = () => {
-      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-      const w = CARD_W_REM * rem;
-      const gap = GAP_REM * rem;
-      const rowW = ROW_SCALE.reduce((s, sc) => s + w * sc, 0) + 6 * gap;
+      const { w, gap, rowW } = getRowValues();
+      if (rowOffset) {
+        const dupIdx = i - originalCount;
+        let pos = rowW / 2 + gap + (w * scale) / 2;
+        for (let j = 0; j < dupIdx; j++) pos += w * ROW_SCALE[DUP_INDICES[j]] + gap;
+        return pos;
+      }
       let pos = -rowW / 2;
-      for (let j = 0; j < i; j++) pos += w * ROW_SCALE[j] + gap;
+      for (let j = 0; j < idx; j++) pos += w * ROW_SCALE[j] + gap;
       return pos + (w * scale) / 2;
     };
+    if (i >= originalCount) {
+      tl.to(card, { opacity: 1, duration: 0.01 }, PART2_START + PART2_DURATION);
+    }
     tl.to(card, { x, y, scale, duration: PART2_DURATION, force3D: true }, PART2_START);
   });
 
@@ -88,14 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const PART3_START = 0.7;
   if (cardsContainer) {
     tl.to(cardsContainer, {
-      x: () => {
-        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-        const w = CARD_W_REM * rem;
-        const gap = GAP_REM * rem;
-        const avgScale = ROW_SCALE.reduce((a, b) => a + b, 0) / ROW_SCALE.length;
-        return -(CAROUSEL_DISTANCE * w * avgScale + (CAROUSEL_DISTANCE - 1) * gap);
-      },
-      duration: 0.3,
+      x: () => -ROW_WIDTH(),
+      duration: 0.22,
       force3D: true,
     }, PART3_START);
   }
